@@ -27,6 +27,21 @@ go.work.sum
 # env file
 .env
 
+# Build artifacts
+bin/
+supreme-broccoli
+migrate
+VERIFICATION_REPORT.md
+
+# Backup files
+backup/
+
+# Kiro IDE
+.kiro/
+
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

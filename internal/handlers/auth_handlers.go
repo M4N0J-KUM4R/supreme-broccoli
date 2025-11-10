@@ -91,3 +91,26 @@ func (h *AuthHandlers) HandleGoogleCallback(w http.ResponseWriter, r *http.Reque
 
 	http.Redirect(w, r, "/terminal/", http.StatusSeeOther)
 }
+
+
+// HandleLogout clears the session and logs out the user
+func (h *AuthHandlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	// Get the session
+	session, err := h.SessionStore.Get(r, "auth-session")
+	if err != nil {
+		log.Printf("Error getting session: %v", err)
+	}
+
+	// Clear all session values
+	session.Values = make(map[interface{}]interface{})
+	session.Options.MaxAge = -1 // This will delete the session cookie
+
+	// Save the session (which will delete it)
+	err = session.Save(r, w)
+	if err != nil {
+		log.Printf("Error saving session during logout: %v", err)
+	}
+
+	// Redirect to home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}

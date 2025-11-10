@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses - CloudLab Terminal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    {{template "navigation" .}}
+    
+    <main class="courses-page">
+        <div class="courses-container">
+            <div class="courses-header">
+                <h1 class="page-title">Available Courses</h1>
+                <p class="page-subtitle">Explore our catalog of hands-on cloud computing courses</p>
+            </div>
+
+            <div class="courses-grid">
+                {{range .Courses}}
+                <div class="course-card">
+                    <div class="course-thumbnail">
+                        <img src="{{.Thumbnail}}" alt="{{.Title}}" loading="lazy">
+                        {{if .Enrolled}}
+                        <div class="enrolled-badge">Enrolled</div>
+                        {{end}}
+                    </div>
+                    
+                    <div class="course-content">
+                        <h3 class="course-title">{{.Title}}</h3>
+                        <p class="course-instructor">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            {{.Instructor}}
+                        </p>
+                        
+                        <div class="course-meta">
+                            <span class="course-duration">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                {{.Duration}}
+                            </span>
+                            <span class="course-level course-level-{{.Level}}">{{.Level}}</span>
+                        </div>
+                        
+                        <p class="course-description">{{.Description}}</p>
+                        
+                        {{if .Enrolled}}
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span class="progress-label">Progress</span>
+                                <span class="progress-percentage">{{.Progress}}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{.Progress}}%"></div>
+                            </div>
+                        </div>
+                        <div class="course-actions">
+                            <a href="/terminal/course-detail/{{.ID}}/content" class="btn btn-primary">Continue Learning</a>
+                        </div>
+                        {{else}}
+                        <div class="course-actions">
+                            <a href="/courses/{{.ID}}/enroll" class="btn btn-outline">Enroll Now</a>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CloudLab Terminal</h4>
+                    <p>Empowering developers with cloud-based learning</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/profile">Profile</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="/courses">Courses</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CloudLab Terminal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

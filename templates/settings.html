@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - CloudLab Terminal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    {{template "navigation" .}}
+    
+    <main class="settings-page">
+        <div class="settings-container">
+            <div class="settings-header">
+                <h1 class="page-title">Settings</h1>
+                <p class="page-subtitle">Customize your CloudLab Terminal experience</p>
+            </div>
+
+            {{if .SuccessMessage}}
+            <div class="alert alert-success">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                {{.SuccessMessage}}
+            </div>
+            {{end}}
+
+            {{if .ErrorMessage}}
+            <div class="alert alert-error">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                {{.ErrorMessage}}
+            </div>
+            {{end}}
+
+            <form method="POST" action="/settings" class="settings-form" id="settingsForm">
+                <!-- Account Information Section -->
+                <section class="settings-section">
+                    <h2 class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Account Information
+                    </h2>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" id="email" name="email" class="form-input" value="{{.User.Email}}" disabled>
+                            <p class="form-help">Your email address cannot be changed</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="displayName" class="form-label">Display Name</label>
+                            <input type="text" id="displayName" name="displayName" class="form-input" 
+                                   value="{{.User.DisplayName}}" placeholder="Enter your display name">
+                            <p class="form-help">This name will be displayed on your profile</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <input type="text" class="form-input" value="{{.User.Role}}" disabled>
+                            <p class="form-help">Contact an administrator to change your role</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Terminal Preferences Section -->
+                <section class="settings-section">
+                    <h2 class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Terminal Preferences
+                    </h2>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label for="terminalFontSize" class="form-label">
+                                Font Size: <span id="fontSizeValue">{{.Settings.TerminalFontSize}}px</span>
+                            </label>
+                            <input type="range" id="terminalFontSize" name="terminalFontSize" 
+                                   class="form-range" min="10" max="24" step="1" 
+                                   value="{{.Settings.TerminalFontSize}}">
+                            <div class="range-labels">
+                                <span>10px</span>
+                                <span>24px</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="terminalColorScheme" class="form-label">Color Scheme</label>
+                            <select id="terminalColorScheme" name="terminalColorScheme" class="form-select">
+                                <option value="dark" {{if eq .Settings.TerminalColorScheme "dark"}}selected{{end}}>Dark</option>
+                                <option value="light" {{if eq .Settings.TerminalColorScheme "light"}}selected{{end}}>Light</option>
+                                <option value="solarized" {{if eq .Settings.TerminalColorScheme "solarized"}}selected{{end}}>Solarized</option>
+                                <option value="monokai" {{if eq .Settings.TerminalColorScheme "monokai"}}selected{{end}}>Monokai</option>
+                            </select>
+                            <div class="color-scheme-preview" id="colorSchemePreview"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="terminalCursorStyle" class="form-label">Cursor Style</label>
+                            <select id="terminalCursorStyle" name="terminalCursorStyle" class="form-select">
+                                <option value="block" {{if eq .Settings.TerminalCursorStyle "block"}}selected{{end}}>Block</option>
+                                <option value="underline" {{if eq .Settings.TerminalCursorStyle "underline"}}selected{{end}}>Underline</option>
+                                <option value="bar" {{if eq .Settings.TerminalCursorStyle "bar"}}selected{{end}}>Bar</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notification Preferences Section -->
+                <section class="settings-section">
+                    <h2 class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        Notification Preferences
+                    </h2>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" name="emailNotifications" class="toggle-input" 
+                                       {{if .Settings.EmailNotifications}}checked{{end}}>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">
+                                    <strong>Email Notifications</strong>
+                                    <span class="toggle-description">Receive important updates via email</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" name="courseUpdates" class="toggle-input" 
+                                       {{if .Settings.CourseUpdates}}checked{{end}}>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">
+                                    <strong>Course Updates</strong>
+                                    <span class="toggle-description">Get notified about new courses and content</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Form Actions -->
+                <div class="settings-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="reset" class="btn btn-outline">Reset</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CloudLab Terminal</h4>
+                    <p>Empowering developers with cloud-based learning</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/profile">Profile</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="/courses">Courses</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CloudLab Terminal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/settings.js"></script>
+</body>
+</html>

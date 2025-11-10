@@ -1,0 +1,27 @@
+{{define "navigation"}}
+<nav class="main-nav">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <a href="/">CloudLab Terminal</a>
+    </div>
+    <div class="nav-links">
+      {{if .IsAuthenticated}}
+        <!-- Authenticated user links -->
+        <a href="/courses" {{if eq .ActivePage "courses"}}class="active"{{end}}>Courses</a>
+        <a href="/profile" {{if eq .ActivePage "profile"}}class="active"{{end}}>Profile</a>
+        <a href="/settings" {{if eq .ActivePage "settings"}}class="active"{{end}}>Settings</a>
+        <a href="/logout" class="btn-logout">Logout</a>
+      {{else}}
+        <!-- Public links -->
+        <a href="/" {{if eq .ActivePage "home"}}class="active"{{end}}>Home</a>
+        <a href="/about" {{if eq .ActivePage "about"}}class="active"{{end}}>About</a>
+        <a href="/contact" {{if eq .ActivePage "contact"}}class="active"{{end}}>Contact</a>
+        <a href="/login" class="btn-login">Login</a>
+      {{end}}
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle mobile menu">
+      <span class="hamburger-icon">☰</span>
+    </button>
+  </div>
+</nav>
+{{end}}

@@ -1,21 +1,547 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CloudLab Terminal</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: grid; place-items: center; min-height: 90vh; }
-    a {
-      font-size: 1.5rem;
-      padding: 1rem 2rem;
-      background-color: #4285F4;
-      color: white;
+    /* Login Page Specific Styles */
+    .login-container {
+      display: flex;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      animation: gradientShift 20s ease infinite;
+      background-size: 400% 400%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated gradient background */
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: rotate 30s linear infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      25% { background-position: 50% 100%; }
+      50% { background-position: 100% 50%; }
+      75% { background-position: 50% 0%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Branding Section (Left) */
+    .branding-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--spacing-3xl);
+      color: var(--text-light);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Decorative elements */
+    .branding-section::after {
+      content: '';
+      position: absolute;
+      bottom: 10%;
+      right: 10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .branding-visual {
+      width: 80px;
+      height: 80px;
+      margin-bottom: var(--spacing-lg);
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      animation: fadeInScale 0.8s ease-out;
+    }
+
+    .branding-logo {
+      font-size: var(--font-size-4xl);
+      font-weight: var(--font-weight-bold);
+      margin-bottom: var(--spacing-lg);
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: fadeInUp 0.8s ease-out;
+      background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .branding-tagline {
+      font-size: var(--font-size-xl);
+      margin-bottom: var(--spacing-2xl);
+      opacity: 0.95;
+      max-width: 500px;
+      animation: fadeInUp 0.8s ease-out 0.2s backwards;
+      line-height: 1.6;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .branding-features {
+      list-style: none;
+      padding: 0;
+      margin: var(--spacing-2xl) 0;
+      text-align: left;
+      max-width: 400px;
+    }
+
+    .branding-features li {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      font-size: var(--font-size-lg);
+      opacity: 0;
+      animation: fadeInLeft 0.6s ease-out forwards;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .branding-features li:nth-child(1) { animation-delay: 0.4s; }
+    .branding-features li:nth-child(2) { animation-delay: 0.5s; }
+    .branding-features li:nth-child(3) { animation-delay: 0.6s; }
+    .branding-features li:nth-child(4) { animation-delay: 0.7s; }
+
+    @keyframes fadeInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 0.95;
+        transform: translateX(0);
+      }
+    }
+
+    .branding-features li::before {
+      content: "✓";
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 100%);
+      border-radius: var(--radius-full);
+      text-align: center;
+      line-height: 36px;
+      margin-right: var(--spacing-md);
+      font-weight: var(--font-weight-bold);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      flex-shrink: 0;
+    }
+
+    /* Login Form Section (Right) */
+    .login-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--spacing-3xl);
+      background-color: var(--bg-primary);
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 450px;
+      padding: var(--spacing-3xl);
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      animation: fadeInScale 0.6s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 200% 100%;
+      animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .login-title {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .login-subtitle {
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+    }
+
+    .login-form {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .google-login-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-lg);
       text-decoration: none;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: all var(--transition-base);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .google-login-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(102, 126, 234, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .google-login-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .google-login-btn:hover {
+      background-color: var(--bg-primary);
+      border-color: #667eea;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+      transform: translateY(-3px);
+    }
+
+    .google-login-btn:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .google-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: var(--spacing-md);
+      position: relative;
+      z-index: 1;
+      transition: transform var(--transition-base);
+    }
+
+    .google-login-btn:hover .google-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .google-login-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .benefits-section {
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-2xl);
+      border-top: 1px solid var(--gray-200);
+      position: relative;
+    }
+
+    .benefits-section::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .benefits-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      text-align: center;
+    }
+
+    .benefits-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .benefits-list li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-md);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      transition: all var(--transition-base);
+      padding: var(--spacing-xs) 0;
+    }
+
+    .benefits-list li:hover {
+      color: var(--text-primary);
+      transform: translateX(4px);
+    }
+
+    .benefits-list li::before {
+      content: "→";
+      color: var(--primary-color);
+      font-weight: var(--font-weight-bold);
+      margin-right: var(--spacing-sm);
+      font-size: var(--font-size-lg);
+      transition: transform var(--transition-base);
+      flex-shrink: 0;
+    }
+
+    .benefits-list li:hover::before {
+      transform: translateX(4px);
+      color: #667eea;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 991px) {
+      .login-container {
+        flex-direction: column;
+      }
+
+      .login-container::before {
+        width: 150%;
+        height: 150%;
+      }
+
+      .branding-section {
+        padding: var(--spacing-2xl) var(--spacing-lg);
+        min-height: 40vh;
+      }
+
+      .branding-section::after {
+        width: 150px;
+        height: 150px;
+      }
+
+      .branding-visual {
+        width: 64px;
+        height: 64px;
+        font-size: 40px;
+      }
+
+      .branding-logo {
+        font-size: var(--font-size-3xl);
+      }
+
+      .branding-tagline {
+        font-size: var(--font-size-lg);
+      }
+
+      .branding-features {
+        display: none;
+      }
+
+      .login-section {
+        padding: var(--spacing-2xl) var(--spacing-lg);
+      }
+
+      .login-card {
+        padding: var(--spacing-xl);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .branding-section {
+        padding: var(--spacing-xl) var(--spacing-md);
+        min-height: 30vh;
+      }
+
+      .branding-section::after {
+        width: 100px;
+        height: 100px;
+        bottom: 5%;
+        right: 5%;
+      }
+
+      .branding-visual {
+        width: 56px;
+        height: 56px;
+        font-size: 32px;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .branding-logo {
+        font-size: var(--font-size-2xl);
+      }
+
+      .branding-tagline {
+        font-size: var(--font-size-base);
+      }
+
+      .login-section {
+        padding: var(--spacing-xl) var(--spacing-md);
+      }
+
+      .login-card {
+        padding: var(--spacing-lg);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .login-title {
+        font-size: var(--font-size-2xl);
+      }
+
+      .google-login-btn {
+        font-size: var(--font-size-base);
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+
+      .google-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .benefits-list li {
+        font-size: var(--font-size-xs);
+      }
+    }
+
+    /* Respect user's motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-  <a href="/auth/google">Log In with Google</a>
+  <div class="login-container">
+    <!-- Branding Section (Left) -->
+    <div class="branding-section">
+      <div class="branding-visual">☁️</div>
+      <div class="branding-logo">CloudLab Terminal</div>
+      <p class="branding-tagline">
+        Access your cloud development environment from anywhere. 
+        Learn, code, and deploy with ease.
+      </p>
+      <ul class="branding-features">
+        <li>Instant access to Google Cloud Shell</li>
+        <li>Integrated Theia IDE for cloud coding</li>
+        <li>Interactive learning labs and guides</li>
+        <li>Secure authentication with Google</li>
+      </ul>
+    </div>
+
+    <!-- Login Form Section (Right) -->
+    <div class="login-section">
+      <div class="login-card">
+        <div class="login-header">
+          <h1 class="login-title">Welcome Back</h1>
+          <p class="login-subtitle">Sign in to continue your learning journey</p>
+        </div>
+
+        <div class="login-form">
+          <a href="/auth/google" class="google-login-btn">
+            <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span>Continue with Google</span>
+          </a>
+        </div>
+
+        <div class="benefits-section">
+          <h3 class="benefits-title">Why sign in?</h3>
+          <ul class="benefits-list">
+            <li>Access your personalized learning dashboard</li>
+            <li>Track your progress across courses and labs</li>
+            <li>Save your terminal configurations and preferences</li>
+            <li>Connect to your Google Cloud projects seamlessly</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
+""

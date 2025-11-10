@@ -45,18 +45,40 @@ func main() {
 		DB:           db,
 	}
 
+	pageHandlers := handlers.NewPageHandlers(sessionStore)
+
 	// Initialize middleware
 	authMiddleware := middleware.Auth(sessionStore)
 	adminMiddleware := middleware.Admin(sessionStore)
 
 	// Register routes
 	// Public routes
-	http.HandleFunc("/", authHandlers.HandleLogin)
+	http.HandleFunc("/", pageHandlers.HandleHome)
+	http.HandleFunc("/about", pageHandlers.HandleAbout)
+	http.HandleFunc("/contact", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			pageHandlers.HandleContactSubmit(w, r)
+		} else {
+			pageHandlers.HandleContactPage(w, r)
+		}
+	})
 	http.HandleFunc("/login", authHandlers.HandleLogin)
 	http.HandleFunc("/auth/google", authHandlers.HandleGoogleLogin)
 	http.HandleFunc("/auth/google/callback", authHandlers.HandleGoogleCallback)
 
 	// Protected routes
+	http.Handle("/courses", authMiddleware(http.HandlerFunc(pageHandlers.HandleCourses)))
+	http.Handle("/profile", authMiddleware(http.HandlerFunc(pageHandlers.HandleProfile)))
+	http.HandleFunc("/settings", func(w http.ResponseWriter, r *http.Request) {
+		authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost {
+				pageHandlers.HandleSettingsUpdate(w, r)
+			} else {
+				pageHandlers.HandleSettingsPage(w, r)
+			}
+		})).ServeHTTP(w, r)
+	})
+	http.HandleFunc("/logout", authHandlers.HandleLogout)
 	http.Handle("/terminal/", authMiddleware(http.HandlerFunc(terminalHandlers.HandleTerminal)))
 	http.HandleFunc("/ws", terminalHandlers.HandleWebSocket)
 
@@ -66,6 +88,10 @@ func main() {
 	// Editor proxy route
 	proxyHandler := http.StripPrefix("/editor/", http.HandlerFunc(handlers.HandleEditorProxy))
 	http.Handle("/editor/", authMiddleware(proxyHandler))
+
+	// Static file serving
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Start server
 	log.Printf("Starting web terminal server on http://localhost:%s", cfg.ServerPort)

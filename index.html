@@ -1,0 +1,709 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Go Web Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    
+    <style>
+      /* --- Base Layout --- */
+      html, body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        padding: 0;
+        margin: 0;
+        background-color: #f4f4f4;
+        height: 100vh;
+        display: flex;
+        overflow: hidden; 
+      }
+
+      /* --- 1. Icon Nav (Far Left) --- */
+      #icon-nav {
+        width: 60px;
+        background-color: #2c3e50;
+        color: white;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 15px;
+        z-index: 20;
+      }
+      .nav-icon {
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #bdc3c7;
+      }
+      .nav-icon.active {
+        background-color: #ecf0f1;
+        color: #2c3e50;
+        border-left: 3px solid #1abc9c;
+      }
+      .nav-icon:hover:not(.active) {
+        background-color: #34495e;
+      }
+      #icon-logo {
+        font-size: 1.5rem;
+        color: #d9534f;
+        padding-bottom: 15px;
+        cursor: default;
+      }
+
+      /* --- 2. Side Panels --- */
+      .side-panel {
+        width: 350px;
+        background-color: #ffffff;
+        border-right: 1px solid #e0e0e0;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        z-index: 10;
+        display: none; 
+      }
+      .side-panel.open {
+        display: flex;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+      .panel-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #333;
+      }
+      .panel-close-btn {
+        font-size: 1.8rem;
+        color: #888;
+        cursor: pointer;
+        line-height: 1;
+      }
+      
+      /* --- NEW: Panel Toggles --- */
+      .panel-toggle {
+        display: flex;
+        background-color: #f9f9f9;
+        padding: 5px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .panel-toggle-btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        cursor: pointer;
+        background-color: transparent;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #555;
+        border-radius: 4px;
+      }
+      .panel-toggle-btn.active {
+        background-color: #fff;
+        color: #1abc9c;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      /* --- End Toggles --- */
+      
+      .panel-body {
+        flex-grow: 1;
+        overflow-y: auto;
+        /* MODIFIED: Padding removed, moved to inner divs */
+        padding: 0; 
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* NEW: Content for panel tabs */
+      .panel-tab-content {
+        display: none; /* Hidden by default */
+        flex-grow: 1;
+        overflow-y: auto;
+      }
+      .panel-tab-content.active {
+        display: block; /* Show active tab */
+      }
+      
+      /* Add padding back to guide */
+      #lab-guide-content {
+        padding: 20px;
+      }
+      
+      /* Editor content fills space */
+      #lab-editor-content {
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+      }
+      #lab-editor-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      
+      /* Markdown Styles */
+      #lab-guide-content h1, #lab-guide-content h2 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+      #lab-guide-content code {
+        background-color: #f3f3f3;
+        padding: 2px 5px;
+        border-radius: 3px;
+      }
+      #lab-guide-content pre {
+        background-color: #f3f3f3;
+        padding: 10px;
+        border-radius: 3px;
+        overflow-x: auto;
+      }
+      /* End Markdown Styles */
+
+      .panel-footer {
+        padding: 20px;
+        border-top: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+      .panel-footer textarea {
+        width: 100%;
+        height: 80px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px;
+        box-sizing: border-box; 
+        font-family: inherit;
+        font-size: 0.9rem;
+      }
+      .panel-footer button {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        background-color: #2c3e50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      /* --- End Panel Styles --- */
+
+
+      /* --- 3. Main Content Area --- */
+      #main-content {
+        flex-grow: 1; 
+        display: flex; 
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #f4f4f4;
+      }
+      
+      #main-header {
+        display: flex;
+        flex-direction: column;
+        padding: 15px 25px;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
+      }
+      .header-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+      .header-left .course-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+      }
+      .header-left .instructor-name {
+        font-size: 0.9rem;
+        color: #777;
+      }
+      .header-right {
+        display: flex;
+        gap: 20px;
+      }
+      .stat-item {
+        text-align: center;
+      }
+      .stat-item .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+      }
+      .stat-item .label {
+        font-size: 0.75rem;
+        color: #777;
+        text-transform: uppercase;
+      }
+      
+      .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+        width: 100%;
+      }
+      .progress-bar-wrapper {
+        flex-grow: 1;
+        height: 10px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .progress-bar {
+        height: 100%;
+        background-color: #1abc9c;
+        border-radius: 5px;
+        transition: width 0.3s ease;
+      }
+      .progress-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .content-section {
+        display: none; 
+        flex-grow: 1;
+        flex-direction: column;
+        padding: 25px;
+        overflow-y: auto; 
+      }
+      .content-section.active {
+        display: flex; 
+      }
+      
+      /* --- Lab (Terminal) Styles --- */
+      #cloudlab-content h1 {
+        margin-top: 0;
+      }
+      #terminal {
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: none; 
+        flex-grow: 1; 
+        min-height: 300px; 
+      }
+      .controls {
+        margin-bottom: 10px;
+      }
+      .controls button {
+        font-size: 16px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: white;
+      }
+      #startButton {
+        background-color: #28a745;
+      }
+      #stopButton {
+        background-color: #dc3545;
+      }
+      #stopButton:disabled, #startButton:disabled {
+        background-color: #a0a0e0;
+      }
+      #status {
+        font-style: italic;
+        color: #555;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="icon-nav">
+      <div id="icon-logo">🅖</div>
+      <div class="nav-icon" id="nav-content" data-view="content">Content</div>
+      <div class="nav-icon" id="nav-notes" data-view="notes">Notes</div> 
+      <div class="nav-icon" id="nav-cloudlab" data-view="learn">Lab</div> 
+      <div class="nav-icon" id="nav-discussion" data-view="discussion">Chat</div>
+      <div class="nav-icon" id="nav-play" data-view="play">Play</div>
+      <div class="nav-icon" id="nav-report" data-view="report">Report</div>
+    </div>
+
+    <div id="lab-guide-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-title">Lab</span>
+        <span class="panel-close-btn" id="lab-guide-close-btn">&times;</span>
+      </div>
+      <div class="panel-toggle">
+        <button id="guide-tab" class="panel-toggle-btn active">Guide</button>
+        <button id="editor-tab" class="panel-toggle-btn">Editor</button>
+      </div>
+      <div class="panel-body">
+        <div class="panel-tab-content active" id="lab-guide-content">
+          </div>
+        <div class="panel-tab-content" id="lab-editor-content">
+          <iframe 
+            src="http://localhost:3000" 
+            id="lab-editor-iframe"
+            title="Theia IDE">
+          </iframe>
+        </div>
+      </div>
+    </div>
+
+    <div id="notes-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-title">Notes</span>
+        <span class="panel-close-btn">&times;</span>
+      </div>
+      <div class="panel-body" style="padding: 20px;"> </div>
+      <div class="panel-footer">
+        <textarea placeholder="Type a new message"></textarea>
+        <button>Save</button>
+      </div>
+    </div>
+
+    <div id="discussion-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-title">Discussion</span>
+        <span class="panel-close-btn">&times;</span>
+      </div>
+      <div class="panel-body" style="padding: 20px;">
+      </div>
+      <div class="panel-footer">
+        <textarea placeholder="Type a message..."></textarea>
+        <button>Send</button>
+      </div>
+    </div>
+
+    <div id="report-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-title">Report</span>
+        <span class="panel-close-btn">&times;</span>
+      </div>
+      <div class="panel-body" style="padding: 20px;">
+        <p>This is where your reports will be displayed.</p>
+      </div>
+    </div>
+
+
+    <div id="main-content">
+
+      <div id="main-header">
+        <div class="header-top-row">
+          <div class="header-left">
+            <div class="course-name">Go and gcloud Web Terminal</div>
+            <div class="instructor-name">Instructor: Jane Doe</div>
+          </div>
+          <div class="header-right">
+            <div class="stat-item">
+              <div class="value">8h</div>
+              <div class="label">Hours</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">2/5</div>
+              <div class="label">Assessments</div>
+            </div>
+            <div class="stat-item">
+              <div class="value">Expert</div>
+              <div class="label">Level</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="progress-container">
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar" style="width: 75%;"></div>
+          </div>
+          <div class="progress-label">75%</div>
+        </div>
+      </div>
+      <div class="content-section" id="content-content">
+        <h1>Content</h1>
+        <p>This is where the main course content (like text, images) will go.</p>
+      </div>
+      
+      <div class="content-section" id="play-content">
+        <h1>Play</h1>
+        <p>This is where the video/play content will go.</p>
+      </div>
+
+      <div class="content-section" id="cloudlab-content">
+        <h1>Go + gcloud Cloud Lab</h1>
+        <div class="controls">
+          <button id="startButton">▶️ Start Session</button>
+          <button id="stopButton">⏹️ Stop Session</button>
+        </div>
+        <p id="status">Click 'Start Session' to connect.</p>
+        <div id="terminal"></div>
+      </div>
+      
+    </div>
+
+
+    <script>
+      // --- Xterm.js Terminal Setup ---
+      const term = new Terminal({
+        cursorBlink: true,
+        convertEol: true
+      });
+      const fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      const terminalDiv = document.getElementById('terminal');
+      term.open(terminalDiv);
+      
+      // --- Lab Elements ---
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+      const statusText = document.getElementById('status');
+      let ws = null; 
+
+      stopButton.disabled = true;
+      startButton.disabled = false;
+      
+      // --- Terminal Functions ---
+      function startSession() {
+        if (ws) return;
+        terminalDiv.style.display = 'block'; 
+        statusText.style.display = 'none'; 
+        fitAddon.fit(); 
+        term.clear();
+        term.write("--- Connecting to Go backend... ---");
+        const wsProtocol = (location.protocol === "https:") ? "wss://" : "ws://";
+        const wsUrl = wsProtocol + location.host + "/ws";
+        ws = new WebSocket(wsUrl);
+        ws.onopen = () => {
+          console.log("WebSocket connected!");
+          term.write("\r\n--- Connected! ---");
+          stopButton.disabled = false;
+          startButton.disabled = true;
+        };
+        ws.onclose = () => {
+          console.log("WebSocket disconnected.");
+          term.write("\r\n--- Connection closed ---");
+          terminalDiv.style.display = 'none';
+          statusText.style.display = 'block';
+          statusText.innerText = 'Connection closed. Click "Start Session" to reconnect.';
+          stopButton.disabled = true;
+          startButton.disabled = false;
+          ws = null;
+        };
+        ws.onmessage = async (event) => {
+          if (event.data instanceof Blob) {
+            const data = await event.data.arrayBuffer();
+            term.write(new Uint8Array(data));
+          } else {
+            term.write("\r\n--- " + event.data + " ---");
+          }
+        };
+        ws.onerror = (err) => {
+            console.error("WebSocket Error:", err);
+            term.write("\r\n--- A connection error occurred ---");
+            statusText.innerText = 'A connection error occurred. Please try again.';
+        };
+      }
+      function stopSession() {
+        if (ws) ws.close();
+      }
+
+      term.onData((data) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(new TextEncoder().encode(data));
+        }
+      });
+      startButton.addEventListener('click', startSession);
+      stopButton.addEventListener('click', stopSession);
+      window.onresize = () => {
+        if (ws) fitAddon.fit();
+      };
+      
+      // --- Routing and Navigation Logic ---
+
+      // --- Constants ---
+      const MOCK_COURSE_ID = '690508fb99dc7aa1a795c342';
+      const BASE_APP_PATH = '/terminal'; 
+
+      // --- Get Elements ---
+      const allNavIcons = document.querySelectorAll('.nav-icon');
+      const allPanels = document.querySelectorAll('.side-panel'); 
+      const mainContentSections = document.querySelectorAll('.content-section');
+      
+      const regularPanelCloseButtons = document.querySelectorAll('.side-panel:not(#lab-guide-panel) .panel-close-btn');
+      
+      const labGuidePanel = document.getElementById('lab-guide-panel');
+      const labGuideCloseBtn = document.getElementById('lab-guide-close-btn');
+      
+      // NEW: Lab Panel Toggles
+      const guideTab = document.getElementById('guide-tab');
+      const editorTab = document.getElementById('editor-tab');
+      const guideContent = document.getElementById('lab-guide-content');
+      const editorContent = document.getElementById('lab-editor-content');
+
+
+      // --- Core UI Update Function ---
+      function updateUiForView(view) {
+          allNavIcons.forEach(i => i.classList.remove('active'));
+          allPanels.forEach(p => p.classList.remove('open'));
+          mainContentSections.forEach(s => s.classList.remove('active'));
+
+          switch (view) {
+              case 'notes':
+              case 'discussion':
+              case 'report':
+                  document.getElementById(view + '-panel').classList.add('open');
+                  document.getElementById('nav-' + view).classList.add('active');
+                  
+                  const activeMainView = getActiveMainView() || 'content'; 
+                  updateUiForView(activeMainView);
+                  
+                  document.getElementById(view + '-panel').classList.add('open');
+                  document.getElementById('nav-' + view).classList.add('active');
+                  break;
+              
+              case 'learn':
+                  document.getElementById('cloudlab-content').classList.add('active');
+                  document.getElementById('nav-cloudlab').classList.add('active');
+                  labGuidePanel.classList.add('open'); 
+                  if (ws) fitAddon.fit();
+                  break;
+
+              case 'content':
+              case 'play':
+              default:
+                  let contentId = 'content-content'; // default to content
+                  let navId = 'nav-content';
+
+                  if (view === 'play') {
+                      contentId = 'play-content';
+                      navId = 'nav-play';
+                  } else if (view === 'learn') { 
+                      contentId = 'cloudlab-content';
+                      navId = 'nav-cloudlab';
+                  }
+
+                  document.getElementById(contentId).classList.add('active');
+                  document.getElementById(navId).classList.add('active');
+                  break;
+          }
+      }
+      
+      // --- Helper function ---
+      function getActiveMainView() {
+          if (document.getElementById('content-content').classList.contains('active')) {
+              return 'content';
+          }
+          if (document.getElementById('play-content').classList.contains('active')) {
+              return 'play';
+          }
+          if (document.getElementById('cloudlab-content').classList.contains('active')) {
+              return 'learn';
+          }
+          return null;
+      }
+
+
+      // --- Navigation Function ---
+      function navigate(view) {
+          const newPath = `${BASE_APP_PATH}/course-detail/${MOCK_COURSE_ID}/${view}`;
+          const currentState = history.state ? history.state.view : null;
+          
+          if (currentState !== view) {
+              history.pushState({ view: view }, "", newPath);
+          }
+          updateUiForView(view);
+      }
+
+      // --- Event Listeners ---
+
+      // 1. Nav Icon Clicks
+      allNavIcons.forEach(icon => {
+          const view = icon.getAttribute('data-view');
+          if (view) {
+              icon.addEventListener('click', () => navigate(view));
+          }
+      });
+
+      // 2. Regular Panel Close Button Clicks (Notes, Chat, Report)
+      regularPanelCloseButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+              const mainView = getActiveMainView() || 'content'; 
+              navigate(mainView);
+          });
+      });
+      
+      // 3. Special listener for Lab Guide Close Button
+      labGuideCloseBtn.addEventListener('click', () => {
+          labGuidePanel.classList.remove('open');
+      });
+
+      // 4. Browser Back/Forward
+      window.addEventListener('popstate', (event) => {
+          if (event.state && event.state.view) {
+              updateUiForView(event.state.view);
+          } else {
+              parseInitialUrl();
+          }
+      });
+
+      // 5. Initial Page Load
+      function parseInitialUrl() {
+          const path = window.location.pathname;
+          const parts = path.split('/');
+          let view = parts[parts.length - 1];
+
+          const validViews = ['content', 'learn', 'play', 'notes', 'discussion', 'report'];
+          if (!validViews.includes(view)) {
+              view = 'content'; // Default to 'content'
+              
+              const defaultPath = `${BASE_APP_PATH}/course-detail/${MOCK_COURSE_ID}/${view}`;
+              history.replaceState({ view: view }, "", defaultPath);
+          }
+          
+          updateUiForView(view);
+      }
+      
+      // 6. Load Markdown Content
+      function loadMockMarkdown() {
+          const mockMarkdown = "# Lab Guide\n\nThis is the guide for the lab.\n\n## Step 1\n\n- Do this first.\n- Then do this.\n\n## Step 2\n\nRun `gcloud version` in the terminal to verify your setup.\n\n### Sub-step 2a\n\n```bash\nls -la\necho 'hello world'\n```\n";
+          
+          const converter = new showdown.Converter();
+          const html = converter.makeHtml(mockMarkdown);
+          document.getElementById('lab-guide-content').innerHTML = html;
+      }
+      
+      // 7. NEW: Lab Panel Toggle Listeners
+      guideTab.addEventListener('click', () => {
+          guideTab.classList.add('active');
+          editorTab.classList.remove('active');
+          guideContent.classList.add('active');
+          editorContent.classList.remove('active');
+      });
+      
+      editorTab.addEventListener('click', () => {
+          editorTab.classList.add('active');
+          guideTab.classList.remove('active');
+          editorContent.classList.add('active');
+          guideContent.classList.remove('active');
+      });
+
+
+      // Run on load
+      window.addEventListener('load', () => {
+          loadMockMarkdown();
+          parseInitialUrl();
+      });
+
+    </script>
+  </body>
+</html>
